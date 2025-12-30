@@ -241,10 +241,7 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-// Indexes for faster lookups
-UserSchema.index({ email: 1 });
-UserSchema.index({ username: 1 });
-UserSchema.index({ uniqueId: 1 });
+// Indexes for faster lookups (unique indexes are already created by unique: true in schema)
 UserSchema.index({ lastActive: -1 });
 UserSchema.index({ createdAt: -1 });
 
