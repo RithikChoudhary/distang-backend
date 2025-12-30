@@ -7,6 +7,7 @@ import { Mood } from '../models/Mood.model';
 import { config } from '../config/env';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
+import { getRequestLogs, getRequestStats } from '../middlewares/security.middleware';
 
 // Admin credentials (in production, store in database with hashed password)
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@distang.com';
@@ -83,7 +84,7 @@ export const getStats = async (_req: Request, res: Response): Promise<void> => {
       memoriesWeek,
     ] = await Promise.all([
       User.countDocuments(),
-      Couple.countDocuments({ status: 'active' }),
+      Couple.countDocuments(), // Count all couples regardless of status
       Memory.countDocuments(),
       Message.countDocuments(),
       User.countDocuments({ createdAt: { $gte: today } }),
@@ -1062,6 +1063,31 @@ export const exportData = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Failed to export data',
+    });
+  }
+};
+
+/**
+ * Get API Request Logs
+ */
+export const getApiLogs = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 100;
+    const logs = getRequestLogs(limit);
+    const stats = getRequestStats();
+
+    res.json({
+      success: true,
+      data: {
+        logs,
+        stats,
+      },
+    });
+  } catch (error) {
+    console.error('Get API logs error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get API logs',
     });
   }
 };

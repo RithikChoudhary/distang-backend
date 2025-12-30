@@ -19,6 +19,7 @@ import {
   getSystemHealth,
   getActivityFeed,
   exportData,
+  getApiLogs,
 } from '../controllers/admin.controller';
 
 const router = Router();
@@ -70,6 +71,7 @@ router.get('/analytics', getAnalytics);
 router.get('/activity', getActivityFeed);
 router.get('/health', getSystemHealth);
 router.get('/export', exportData);
+router.get('/logs', getApiLogs);
 
 // Users
 router.get('/users', getUsers);

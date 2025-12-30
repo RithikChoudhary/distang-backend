@@ -99,6 +99,19 @@ export const sanitizeRequest = (
   next();
 };
 
+// In-memory request log storage (last 1000 requests)
+const requestLogs: Array<{
+  method: string;
+  url: string;
+  status: number;
+  duration: number;
+  ip: string;
+  timestamp: Date;
+  userAgent?: string;
+}> = [];
+
+const MAX_LOGS = 1000;
+
 /**
  * Request logger middleware
  */
@@ -113,16 +126,75 @@ export const requestLogger = (
     const duration = Date.now() - start;
     const log = `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`;
     
+    // Store in memory for admin dashboard
+    requestLogs.unshift({
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      duration,
+      ip: req.ip || req.socket.remoteAddress || 'unknown',
+      timestamp: new Date(),
+      userAgent: req.get('User-Agent'),
+    });
+    
+    // Keep only last MAX_LOGS entries
+    if (requestLogs.length > MAX_LOGS) {
+      requestLogs.length = MAX_LOGS;
+    }
+    
+    // Console logging
     if (res.statusCode >= 500) {
       console.error(`[ERROR] ${log}`);
     } else if (res.statusCode >= 400) {
       console.warn(`[WARN] ${log}`);
-    } else if (config.isDevelopment) {
+    } else {
       console.log(`[INFO] ${log}`);
     }
   });
   
   next();
+};
+
+/**
+ * Get recent API request logs
+ */
+export const getRequestLogs = (limit = 100) => {
+  return requestLogs.slice(0, limit);
+};
+
+/**
+ * Get API request stats
+ */
+export const getRequestStats = () => {
+  const total = requestLogs.length;
+  const errors = requestLogs.filter(l => l.status >= 400).length;
+  const avgDuration = total > 0 
+    ? requestLogs.reduce((sum, l) => sum + l.duration, 0) / total 
+    : 0;
+  
+  // Group by endpoint
+  const endpoints: Record<string, { count: number; errors: number; avgDuration: number }> = {};
+  requestLogs.forEach(log => {
+    const key = `${log.method} ${log.url.split('?')[0]}`;
+    if (!endpoints[key]) {
+      endpoints[key] = { count: 0, errors: 0, avgDuration: 0 };
+    }
+    endpoints[key].count++;
+    if (log.status >= 400) endpoints[key].errors++;
+    endpoints[key].avgDuration = 
+      (endpoints[key].avgDuration * (endpoints[key].count - 1) + log.duration) / endpoints[key].count;
+  });
+  
+  return {
+    total,
+    errors,
+    errorRate: total > 0 ? ((errors / total) * 100).toFixed(2) + '%' : '0%',
+    avgDuration: Math.round(avgDuration),
+    topEndpoints: Object.entries(endpoints)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 10)
+      .map(([endpoint, stats]) => ({ endpoint, ...stats })),
+  };
 };
 
 // Clean up old rate limit entries periodically
