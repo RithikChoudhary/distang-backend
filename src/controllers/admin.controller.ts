@@ -800,9 +800,9 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
 
     const query: any = {};
     if (coupleId) query.coupleId = coupleId;
-    if (type) query.type = type;
+    if (type) query.messageType = type;
     if (search) {
-      query.content = { $regex: search, $options: 'i' };
+      query.message = { $regex: search, $options: 'i' };
     }
 
     const [messages, total] = await Promise.all([
@@ -976,10 +976,11 @@ export const getActivityFeed = async (req: Request, res: Response): Promise<void
 
     recentMessages.slice(0, 10).forEach(msg => {
       const sender = msg.senderId as any;
+      const msgType = (msg as any).messageType || 'text';
       activities.push({
         type: 'message_sent',
-        icon: msg.type === 'image' ? '📷' : msg.type === 'voice' ? '🎤' : '💬',
-        message: `${sender?.name || 'User'} sent a ${msg.type || 'text'} message`,
+        icon: msgType === 'image' ? '📷' : msgType === 'voice' ? '🎤' : '💬',
+        message: `${sender?.name || 'User'} sent a ${msgType} message`,
         timestamp: msg.createdAt,
         data: { messageId: msg._id },
       });
