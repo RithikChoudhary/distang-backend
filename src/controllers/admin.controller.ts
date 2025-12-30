@@ -4,7 +4,7 @@ import { Couple } from '../models/Couple.model';
 import { Memory } from '../models/Memory.model';
 import { Message } from '../models/Message.model';
 import { config } from '../config/env';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 // Admin credentials (in production, store in database)
@@ -281,7 +281,7 @@ export const deleteCouple = async (req: Request, res: Response): Promise<void> =
 
     // Remove coupleId from both users
     await User.updateMany(
-      { _id: { $in: [couple.user1, couple.user2] } },
+      { _id: { $in: [couple.partner1, couple.partner2] } },
       { $unset: { coupleId: 1 } }
     );
 

@@ -10,6 +10,9 @@ export interface AuthenticatedRequest extends Request {
   tokenPayload?: TokenPayload;
 }
 
+// Alias for backward compatibility
+export type AuthRequest = AuthenticatedRequest;
+
 /**
  * Authentication middleware
  * Verifies JWT token and attaches user to request

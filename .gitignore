@@ -1,0 +1,78 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Expo
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Native builds
+*.apk
+*.aab
+*.ipa
+android/
+ios/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+coverage/
+
+# Misc
+*.log
+.cache/
+tmp/
+temp/
+
+# Uploads (keep folder structure but not files)
+backend/uploads/chat/*
+backend/uploads/gallery/*
+backend/uploads/memories/*
+backend/uploads/profiles/*
+backend/uploads/streaks/*
+backend/uploads/voice/*
+!backend/uploads/chat/.gitkeep
+!backend/uploads/gallery/.gitkeep
+!backend/uploads/memories/.gitkeep
+!backend/uploads/profiles/.gitkeep
+!backend/uploads/streaks/.gitkeep
+!backend/uploads/voice/.gitkeep
+
+# TypeScript
+*.tsbuildinfo
+
+# Package locks (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+

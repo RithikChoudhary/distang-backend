@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { User } from '../models/User.model';
 import { OTP, OTPType, generateOTP } from '../models/OTP.model';
 import { generateToken } from '../utils/jwt';
@@ -497,9 +498,9 @@ export const resendOTP = async (req: Request, res: Response): Promise<void> => {
  * Complete profile setup (first time user)
  * POST /auth/complete-profile
  */
-export const completeProfile = async (req: Request, res: Response): Promise<void> => {
+export const completeProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!._id;
     const { profilePhoto, photos, favorites, gender } = req.body;
 
     const user = await User.findById(userId);
