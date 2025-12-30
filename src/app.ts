@@ -66,11 +66,9 @@ export const createApp = (): Express => {
   app.use('/api', rateLimiter);
   app.use('/auth', rateLimiter);
   
-  // CORS configuration
+  // CORS configuration - allow all origins for now (mobile app + admin panel)
   app.use(cors({
-    origin: config.isDevelopment 
-      ? '*' 
-      : config.corsOrigins,
+    origin: true, // Reflect the request origin
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
