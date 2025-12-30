@@ -74,6 +74,9 @@ export interface IUser extends Document {
   pastRelationshipExists: boolean;
   isProfileComplete: boolean;
   isVerified: boolean;
+  isBanned: boolean;
+  adminNote?: string;
+  lastActive?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -220,6 +223,18 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    adminNote: {
+      type: String,
+      default: null,
+    },
+    lastActive: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -230,5 +245,7 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index({ email: 1 });
 UserSchema.index({ username: 1 });
 UserSchema.index({ uniqueId: 1 });
+UserSchema.index({ lastActive: -1 });
+UserSchema.index({ createdAt: -1 });
 
 export const User = mongoose.model<IUser>('User', UserSchema);

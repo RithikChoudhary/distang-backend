@@ -4,15 +4,21 @@ import { config } from '../config/env';
 import {
   adminLogin,
   getStats,
+  getAnalytics,
   getUsers,
   getUser,
+  updateUser,
   deleteUser,
   getCouples,
+  getCouple,
   deleteCouple,
   getMemories,
   deleteMemory,
   getMessages,
   deleteMessage,
+  getSystemHealth,
+  getActivityFeed,
+  exportData,
 } from '../controllers/admin.controller';
 
 const router = Router();
@@ -58,16 +64,22 @@ router.post('/login', adminLogin);
 // Protected admin routes
 router.use(adminAuth);
 
-// Dashboard
+// Dashboard & Analytics
 router.get('/stats', getStats);
+router.get('/analytics', getAnalytics);
+router.get('/activity', getActivityFeed);
+router.get('/health', getSystemHealth);
+router.get('/export', exportData);
 
 // Users
 router.get('/users', getUsers);
 router.get('/users/:id', getUser);
+router.put('/users/:id', updateUser);
 router.delete('/users/:id', deleteUser);
 
 // Couples
 router.get('/couples', getCouples);
+router.get('/couples/:id', getCouple);
 router.delete('/couples/:id', deleteCouple);
 
 // Memories
@@ -79,4 +91,3 @@ router.get('/messages', getMessages);
 router.delete('/messages/:id', deleteMessage);
 
 export default router;
-
