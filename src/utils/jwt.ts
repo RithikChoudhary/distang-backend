@@ -1,4 +1,4 @@
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 import { config } from '../config/env';
 
 /**
@@ -18,7 +18,12 @@ export const generateToken = (userId: string, uniqueId: string): string => {
     uniqueId,
   };
   
-  return jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  const secret: Secret = config.jwtSecret;
+  // Parse expiresIn as seconds if it's a number string, otherwise use as-is
+  const expiresInSeconds = parseInt(config.jwtExpiresIn, 10);
+  const expiresIn = isNaN(expiresInSeconds) ? '7d' : expiresInSeconds;
+  
+  return jwt.sign(payload, secret, { expiresIn });
 };
 
 /**
