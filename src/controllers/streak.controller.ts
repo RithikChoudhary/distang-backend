@@ -2,9 +2,11 @@ import { Response } from 'express';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { Streak, StreakPhoto } from '../models/Streak.model';
 import { Couple } from '../models/Couple.model';
+import { uploadImage } from '../services/cloudinary.service';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Upload streak photo
+ * Upload streak photo (uploads to Cloudinary)
  * - Users can upload up to 3 photos
  * - Photos expire after 24 hours if not viewed
  * - If viewed, they become "seen" after 40 seconds
@@ -54,13 +56,33 @@ export const uploadStreakPhoto = async (
       return;
     }
     
+    // Upload to Cloudinary
+    const dateStr = new Date().toISOString().split('T')[0];
+    const photoId = `${dateStr}_${user._id.toString()}_${uuidv4().slice(0, 8)}`;
+    const result = await uploadImage(
+      file.buffer,
+      'streak',
+      undefined,
+      couple._id.toString(),
+      photoId
+    );
+    
+    if (!result) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to upload image to cloud storage.',
+      });
+      return;
+    }
+    
     // Create streak photo (expires in 24 hours)
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     
     const photo = new StreakPhoto({
       coupleId: couple._id,
       uploadedBy: user._id,
-      imagePath: `/uploads/streaks/${file.filename}`,
+      imagePath: result.url,
+      cloudinaryPublicId: result.publicId,
       expiresAt,
     });
     

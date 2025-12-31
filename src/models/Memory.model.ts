@@ -18,6 +18,7 @@ export interface IMemory extends Document {
   uploadedBy: mongoose.Types.ObjectId;
   imagePath: string;
   thumbnailPath?: string;
+  cloudinaryPublicId?: string;
   caption?: string;
   status: MemoryStatus;
   deletedBy?: mongoose.Types.ObjectId;
@@ -43,6 +44,10 @@ const MemorySchema = new Schema<IMemory>(
       required: true,
     },
     thumbnailPath: {
+      type: String,
+      default: null,
+    },
+    cloudinaryPublicId: {
       type: String,
       default: null,
     },

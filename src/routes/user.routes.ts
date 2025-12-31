@@ -1,7 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middlewares/auth.middleware';
 import {
   getMe,
@@ -20,19 +18,9 @@ import { config } from '../config/env';
 
 const router = Router();
 
-// Configure multer for profile photo uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(config.uploadPath, 'profiles'));
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${uuidv4()}${ext}`);
-  },
-});
-
+// Configure multer with memory storage for Cloudinary
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: config.maxFileSize,
   },
@@ -61,11 +49,11 @@ router.get('/me', authenticate, getMe);
 router.put('/profile', authenticate, updateProfile);
 
 /**
- * @route   POST /user/profile-photo
- * @desc    Upload/update profile photo
+ * @route   PUT /user/profile-photo
+ * @desc    Update profile photo (uploaded to Cloudinary)
  * @access  Private
  */
-router.post('/profile-photo', authenticate, upload.single('photo'), updateProfilePhoto);
+router.put('/profile-photo', authenticate, upload.single('photo'), updateProfilePhoto);
 
 /**
  * @route   GET /user/search/:uniqueId
@@ -104,7 +92,7 @@ router.put('/notifications', authenticate, updateNotifications);
 
 /**
  * @route   GET /user/partner-profile
- * @desc    Get partner's full profile including relationship history
+ * @desc    Get partner's full profile (including relationship history)
  * @access  Private
  */
 router.get('/partner-profile', authenticate, getPartnerProfile);
@@ -118,10 +106,9 @@ router.put('/about', authenticate, updateAbout);
 
 /**
  * @route   GET /user/relationship-history
- * @desc    Get user's own relationship history
+ * @desc    Get my relationship history
  * @access  Private
  */
 router.get('/relationship-history', authenticate, getMyRelationshipHistory);
 
 export default router;
-

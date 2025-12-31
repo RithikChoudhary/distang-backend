@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { User } from '../models/User.model';
 import { Couple, CoupleStatus } from '../models/Couple.model';
+import { uploadImage, deleteFromCloudinary } from '../services/cloudinary.service';
 
 /**
  * Get current user profile
@@ -295,7 +296,7 @@ export const getNotifications = async (
 };
 
 /**
- * Update profile photo
+ * Update profile photo (uploads to Cloudinary)
  */
 export const updateProfilePhoto = async (
   req: AuthenticatedRequest,
@@ -321,8 +322,33 @@ export const updateProfilePhoto = async (
       return;
     }
     
-    // Store relative path - can be changed to S3/Cloudinary URL later
-    user.profilePhoto = `/uploads/profiles/${file.filename}`;
+    // Upload to Cloudinary
+    const result = await uploadImage(
+      file.buffer,
+      'profile',
+      user._id.toString(),
+      undefined,
+      'profile' // Use consistent public_id for profile photos
+    );
+    
+    if (!result) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to upload image to cloud storage.',
+      });
+      return;
+    }
+    
+    // Delete old profile photo from Cloudinary if exists
+    if (user.profilePhoto && user.profilePhoto.includes('cloudinary')) {
+      const oldPublicId = user.profilePhoto.split('/').slice(-2).join('/').split('.')[0];
+      if (oldPublicId) {
+        await deleteFromCloudinary(oldPublicId);
+      }
+    }
+    
+    // Store Cloudinary URL
+    user.profilePhoto = result.url;
     await user.save();
     
     res.status(200).json({

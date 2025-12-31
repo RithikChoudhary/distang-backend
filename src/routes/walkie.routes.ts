@@ -1,8 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middlewares/auth.middleware';
 import {
   sendBuzz,
@@ -12,41 +9,19 @@ import {
   markVoiceMessageListened,
   getWalkieStatus,
 } from '../controllers/walkie.controller';
-import { config } from '../config/env';
 
 const router = Router();
 
-// Create voice uploads directory
-const voiceDir = path.join(config.uploadPath, 'voice');
-if (!fs.existsSync(voiceDir)) {
-  fs.mkdirSync(voiceDir, { recursive: true });
-}
-
-// Configure multer for voice messages
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, voiceDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.m4a';
-    cb(null, `${uuidv4()}${ext}`);
-  },
-});
-
+// Configure multer with memory storage for Cloudinary
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
-      'audio/mpeg',
-      'audio/mp4',
-      'audio/m4a',
-      'audio/x-m4a',
-      'audio/wav',
-      'audio/webm',
-      'audio/ogg',
+      'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a',
+      'audio/x-m4a', 'audio/wav', 'audio/webm', 'audio/ogg', 'audio/aac'
     ];
-    if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.m4a')) {
+    if (allowedTypes.includes(file.mimetype) || file.originalname.match(/\.(m4a|mp3|wav|ogg|aac|webm)$/i)) {
       cb(null, true);
     } else {
       cb(new Error('Invalid audio file type.'));
@@ -70,7 +45,7 @@ router.get('/buzzes', authenticate, getPendingBuzzes);
 
 /**
  * @route   POST /walkie/voice
- * @desc    Send voice message
+ * @desc    Send voice message (uploaded to Cloudinary)
  * @access  Private
  */
 router.post('/voice', authenticate, upload.single('audio'), sendVoiceMessage);
@@ -97,4 +72,3 @@ router.post('/voice/:messageId/listened', authenticate, markVoiceMessageListened
 router.get('/status', authenticate, getWalkieStatus);
 
 export default router;
-

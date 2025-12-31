@@ -32,6 +32,11 @@ export const config = {
   smtpPass: process.env.SMTP_PASS || '',
   emailFrom: process.env.EMAIL_FROM || 'noreply@codexcouples.com',
   
+  // Cloudinary (for file storage)
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || 'dbkbqh8sy',
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '632942881449357',
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
+  
   // Security
   corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['*'],
   rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW || '900000', 10), // 15 min

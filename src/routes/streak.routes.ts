@@ -1,33 +1,14 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middlewares/auth.middleware';
 import { uploadStreakPhoto, getStreakStatus, markPhotoViewed } from '../controllers/streak.controller';
 import { config } from '../config/env';
 
 const router = Router();
 
-// Create streaks upload directory
-const streaksDir = path.join(config.uploadPath, 'streaks');
-if (!fs.existsSync(streaksDir)) {
-  fs.mkdirSync(streaksDir, { recursive: true });
-}
-
-// Configure multer for streak photos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, streaksDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${uuidv4()}${ext}`);
-  },
-});
-
+// Configure multer with memory storage for Cloudinary
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: config.maxFileSize },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -41,7 +22,7 @@ const upload = multer({
 
 /**
  * @route   POST /streak/upload
- * @desc    Upload streak photo (auto-deletes in 24h)
+ * @desc    Upload streak photo (uploaded to Cloudinary, auto-expires in 24h)
  * @access  Private
  */
 router.post('/upload', authenticate, upload.single('image'), uploadStreakPhoto);
@@ -61,4 +42,3 @@ router.get('/status', authenticate, getStreakStatus);
 router.post('/:photoId/viewed', authenticate, markPhotoViewed);
 
 export default router;
-

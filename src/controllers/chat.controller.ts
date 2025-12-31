@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { Message, MessageType } from '../models/Message.model';
 import { Couple } from '../models/Couple.model';
+import { uploadImage, uploadAudio } from '../services/cloudinary.service';
+import { v4 as uuidv4 } from 'uuid';
 
 // Alias for backward compatibility
 type AuthRequest = AuthenticatedRequest;
@@ -107,7 +109,7 @@ export const sendMessage = async (
 };
 
 /**
- * Send an image message to partner
+ * Send an image message to partner (uploads to Cloudinary)
  */
 export const sendImageMessage = async (
   req: AuthRequest,
@@ -149,17 +151,33 @@ export const sendImageMessage = async (
       return;
     }
     
+    // Upload to Cloudinary
+    const messageId = uuidv4();
+    const result = await uploadImage(
+      req.file.buffer,
+      'chat-image',
+      undefined,
+      couple._id.toString(),
+      messageId
+    );
+    
+    if (!result) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to upload image to cloud storage.',
+      });
+      return;
+    }
+    
     const receiverId = couple.partner1.toString() === user._id.toString()
       ? couple.partner2
       : couple.partner1;
-    
-    const imagePath = `/uploads/chat/${req.file.filename}`;
     
     const newMessage = new Message({
       coupleId: couple._id,
       senderId: user._id,
       receiverId,
-      message: imagePath,
+      message: result.url,
       messageType: MessageType.IMAGE,
       isRead: false,
     });
@@ -191,7 +209,7 @@ export const sendImageMessage = async (
 };
 
 /**
- * Send a voice message to partner
+ * Send a voice message to partner (uploads to Cloudinary)
  */
 export const sendVoiceMessage = async (
   req: AuthRequest,
@@ -234,18 +252,35 @@ export const sendVoiceMessage = async (
       return;
     }
     
+    // Upload to Cloudinary
+    const messageId = uuidv4();
+    const result = await uploadAudio(
+      req.file.buffer,
+      'chat-voice',
+      undefined,
+      couple._id.toString(),
+      messageId
+    );
+    
+    if (!result) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to upload audio to cloud storage.',
+      });
+      return;
+    }
+    
     const receiverId = couple.partner1.toString() === user._id.toString()
       ? couple.partner2
       : couple.partner1;
     
-    const audioPath = `/uploads/voice/${req.file.filename}`;
     const durationNum = parseInt(duration) || 0;
     
     const newMessage = new Message({
       coupleId: couple._id,
       senderId: user._id,
       receiverId,
-      message: JSON.stringify({ path: audioPath, duration: durationNum }),
+      message: JSON.stringify({ path: result.url, duration: durationNum }),
       messageType: MessageType.VOICE,
       isRead: false,
     });

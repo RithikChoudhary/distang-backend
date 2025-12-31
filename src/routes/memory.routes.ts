@@ -1,7 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middlewares/auth.middleware';
 import { requireConsent } from '../middlewares/consent.middleware';
 import { ConsentType } from '../models/Consent.model';
@@ -15,19 +13,9 @@ import { config } from '../config/env';
 
 const router = Router();
 
-// Configure multer for memory uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(config.uploadPath, 'memories'));
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${uuidv4()}${ext}`);
-  },
-});
-
+// Configure multer with memory storage for Cloudinary
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: config.maxFileSize,
   },
@@ -43,7 +31,7 @@ const upload = multer({
 
 /**
  * @route   POST /memory/upload
- * @desc    Upload a new memory (photo)
+ * @desc    Upload a new memory (photo) to Cloudinary
  * @access  Private - Requires mutual photo sharing consent
  */
 router.post(
@@ -67,28 +55,26 @@ router.get(
 );
 
 /**
- * @route   GET /memory/:id
+ * @route   GET /memory/:memoryId
  * @desc    Get a single memory
- * @access  Private - Requires mutual memory access consent
+ * @access  Private
  */
 router.get(
-  '/:id',
+  '/:memoryId',
   authenticate,
   requireConsent(ConsentType.MEMORY_ACCESS),
   getMemory
 );
 
 /**
- * @route   DELETE /memory/:id
+ * @route   DELETE /memory/:memoryId
  * @desc    Delete a memory
- * @access  Private - Requires mutual memory access consent
+ * @access  Private
  */
 router.delete(
-  '/:id',
+  '/:memoryId',
   authenticate,
-  requireConsent(ConsentType.MEMORY_ACCESS),
   deleteMemory
 );
 
 export default router;
-

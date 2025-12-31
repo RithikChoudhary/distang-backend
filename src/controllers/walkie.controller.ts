@@ -3,6 +3,8 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 import { Buzz } from '../models/Buzz.model';
 import { VoiceMessage } from '../models/VoiceMessage.model';
 import { Couple } from '../models/Couple.model';
+import { uploadAudio } from '../services/cloudinary.service';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Send a buzz (vibration) to partner
@@ -99,7 +101,7 @@ export const getPendingBuzzes = async (
 };
 
 /**
- * Upload voice message
+ * Upload voice message (uploads to Cloudinary)
  */
 export const sendVoiceMessage = async (
   req: AuthRequest,
@@ -131,6 +133,24 @@ export const sendVoiceMessage = async (
       return;
     }
 
+    // Upload to Cloudinary
+    const messageId = uuidv4();
+    const result = await uploadAudio(
+      file.buffer,
+      'walkie',
+      undefined,
+      couple._id.toString(),
+      messageId
+    );
+    
+    if (!result) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to upload audio to cloud storage.',
+      });
+      return;
+    }
+
     const partnerId = couple.partner1.toString() === user._id.toString()
       ? couple.partner2
       : couple.partner1;
@@ -139,7 +159,8 @@ export const sendVoiceMessage = async (
       coupleId: couple._id,
       sender: user._id,
       recipient: partnerId,
-      audioPath: `/uploads/voice/${file.filename}`,
+      audioPath: result.url,
+      cloudinaryPublicId: result.publicId,
       duration: parseFloat(duration) || 0,
     });
 

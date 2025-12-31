@@ -9,6 +9,7 @@ export interface IVoiceMessage extends Document {
   sender: mongoose.Types.ObjectId;
   recipient: mongoose.Types.ObjectId;
   audioPath: string;
+  cloudinaryPublicId?: string;
   duration: number; // in seconds
   isListened: boolean;
   listenedAt?: Date;
@@ -35,6 +36,10 @@ const VoiceMessageSchema = new Schema<IVoiceMessage>(
     audioPath: {
       type: String,
       required: true,
+    },
+    cloudinaryPublicId: {
+      type: String,
+      default: null,
     },
     duration: {
       type: Number,

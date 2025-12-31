@@ -1,11 +1,11 @@
 import { Response } from 'express';
 import { ConsentRequest } from '../middlewares/consent.middleware';
 import { Memory, MemoryStatus } from '../models/Memory.model';
-import fs from 'fs';
-import path from 'path';
+import { uploadImage, deleteFromCloudinary } from '../services/cloudinary.service';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Upload a memory (photo)
+ * Upload a memory (photo) to Cloudinary
  * Requires mutual consent for photo sharing
  */
 export const uploadMemory = async (
@@ -34,11 +34,30 @@ export const uploadMemory = async (
       return;
     }
     
-    // Create memory record
+    // Upload to Cloudinary
+    const memoryId = uuidv4();
+    const result = await uploadImage(
+      file.buffer,
+      'memory',
+      undefined,
+      couple._id.toString(),
+      memoryId
+    );
+    
+    if (!result) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to upload image to cloud storage.',
+      });
+      return;
+    }
+    
+    // Create memory record with Cloudinary URL
     const memory = new Memory({
       coupleId: couple._id,
       uploadedBy: user._id,
-      imagePath: `/uploads/memories/${file.filename}`,
+      imagePath: result.url,
+      cloudinaryPublicId: result.publicId,
       caption: caption?.trim().slice(0, 500),
       status: MemoryStatus.ACTIVE,
     });
@@ -197,7 +216,7 @@ export const deleteMemory = async (
   try {
     const user = req.user;
     const couple = req.couple;
-    const { id } = req.params;
+    const { memoryId } = req.params;
     
     if (!user || !couple) {
       res.status(401).json({
@@ -208,7 +227,7 @@ export const deleteMemory = async (
     }
     
     const memory = await Memory.findOne({
-      _id: id,
+      _id: memoryId,
       coupleId: couple._id,
       status: MemoryStatus.ACTIVE,
     });
@@ -221,14 +240,16 @@ export const deleteMemory = async (
       return;
     }
     
+    // Delete from Cloudinary if publicId exists
+    if (memory.cloudinaryPublicId) {
+      await deleteFromCloudinary(memory.cloudinaryPublicId);
+    }
+    
     // Mark as deleted (soft delete)
     memory.status = MemoryStatus.DELETED;
     memory.deletedBy = user._id;
     memory.deletedAt = new Date();
     await memory.save();
-    
-    // Optionally delete the file (for MVP, keep files)
-    // In production, might want to queue for deletion
     
     res.status(200).json({
       success: true,

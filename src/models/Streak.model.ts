@@ -10,6 +10,7 @@ export interface IStreakPhoto extends Document {
   coupleId: mongoose.Types.ObjectId;
   uploadedBy: mongoose.Types.ObjectId;
   imagePath: string;
+  cloudinaryPublicId?: string;
   expiresAt: Date;
   viewedAt: Date | null;
   viewedBy: mongoose.Types.ObjectId | null;
@@ -45,6 +46,10 @@ const StreakPhotoSchema = new Schema<IStreakPhoto>(
     imagePath: {
       type: String,
       required: true,
+    },
+    cloudinaryPublicId: {
+      type: String,
+      default: null,
     },
     expiresAt: {
       type: Date,
