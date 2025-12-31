@@ -303,8 +303,11 @@ export const updateProfilePhoto = async (
   res: Response
 ): Promise<void> => {
   try {
+    console.log('📷 Profile photo upload request received');
     const user = req.user;
     const file = req.file;
+    
+    console.log('📷 User:', user?._id, 'File:', file ? `${file.size} bytes, ${file.mimetype}` : 'NO FILE');
     
     if (!user) {
       res.status(401).json({
@@ -315,6 +318,7 @@ export const updateProfilePhoto = async (
     }
     
     if (!file) {
+      console.log('📷 No file in request');
       res.status(400).json({
         success: false,
         message: 'No file uploaded.',
@@ -322,6 +326,7 @@ export const updateProfilePhoto = async (
       return;
     }
     
+    console.log('📷 Starting Cloudinary upload...');
     // Upload to Cloudinary
     const result = await uploadImage(
       file.buffer,
@@ -358,8 +363,9 @@ export const updateProfilePhoto = async (
         profilePhoto: user.profilePhoto,
       },
     });
-  } catch (error) {
-    console.error('Update profile photo error:', error);
+  } catch (error: any) {
+    console.error('❌ Update profile photo error:', error?.message || error);
+    console.error('❌ Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     res.status(500).json({
       success: false,
       message: 'An error occurred while updating profile photo.',
