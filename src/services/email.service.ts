@@ -27,7 +27,7 @@ export const sendOTPEmail = async (
   if (resend) {
     try {
       const { error } = await resend.emails.send({
-        from: 'Distang <onboarding@resend.dev>',
+        from: 'Distang <noreply@email.distang.com>',
         to: email,
         subject: subjects[type],
         html: `
