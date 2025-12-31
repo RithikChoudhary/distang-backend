@@ -79,7 +79,7 @@ router.put('/profile', authenticate, updateProfile);
  * @desc    Update profile photo (uploaded to Cloudinary)
  * @access  Private
  */
-router.post('/profile-photo', authenticate, upload.single('image'), handleMulterError, updateProfilePhoto);
+router.post('/profile-photo', authenticate, upload.single('photo'), handleMulterError, updateProfilePhoto);
 
 /**
  * @route   GET /user/search/:uniqueId
