@@ -1,21 +1,25 @@
 import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 
-// Check if Cloudinary is configured
-const CLOUDINARY_CONFIGURED = !!process.env.CLOUDINARY_API_SECRET;
+// Cloudinary auto-configures from CLOUDINARY_URL if set
+// Format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+// Otherwise, use individual env vars as fallback
+const CLOUDINARY_URL = process.env.CLOUDINARY_URL;
+const CLOUDINARY_CONFIGURED = !!(CLOUDINARY_URL || process.env.CLOUDINARY_API_SECRET);
 
-if (!CLOUDINARY_CONFIGURED) {
-  console.warn('⚠️  CLOUDINARY_API_SECRET not set - file uploads will fail!');
-  console.warn('   Add CLOUDINARY_API_SECRET to your environment variables.');
+if (CLOUDINARY_URL) {
+  console.log('✅ Cloudinary configured via CLOUDINARY_URL');
+  // SDK auto-configures from CLOUDINARY_URL environment variable
+} else if (process.env.CLOUDINARY_API_SECRET) {
+  console.log('✅ Cloudinary configured via individual env vars');
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dbkbqh8sy',
+    api_key: process.env.CLOUDINARY_API_KEY || '632942881449357',
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
 } else {
-  console.log('✅ Cloudinary configured');
+  console.warn('⚠️  Cloudinary not configured - file uploads will fail!');
+  console.warn('   Set CLOUDINARY_URL or CLOUDINARY_API_SECRET in environment variables.');
 }
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dbkbqh8sy',
-  api_key: process.env.CLOUDINARY_API_KEY || '632942881449357',
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 /**
  * Upload types for organizing files

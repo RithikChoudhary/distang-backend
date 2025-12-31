@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import multer from 'multer';
+import { Router, Request, Response, NextFunction } from 'express';
+import multer, { MulterError } from 'multer';
 import { authenticate } from '../middlewares/auth.middleware';
 import {
   getMe,
@@ -22,17 +22,43 @@ const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: config.maxFileSize,
+    fileSize: config.maxFileSize || 10 * 1024 * 1024, // Default 10MB
   },
   fileFilter: (req, file, cb) => {
+    console.log(`📁 Multer processing file: ${file.originalname}, type: ${file.mimetype}, size will be checked`);
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
+      console.log(`❌ Invalid file type: ${file.mimetype}`);
       cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.'));
     }
   },
 });
+
+// Multer error handling middleware
+const handleMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof MulterError) {
+    console.error(`❌ Multer error: ${err.code} - ${err.message}`);
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: `File too large. Maximum size is ${(config.maxFileSize || 10 * 1024 * 1024) / (1024 * 1024)}MB.`,
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: `Upload error: ${err.message}`,
+    });
+  } else if (err) {
+    console.error(`❌ Upload error: ${err.message}`);
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'File upload failed.',
+    });
+  }
+  next();
+};
 
 /**
  * @route   GET /user/me
@@ -53,7 +79,7 @@ router.put('/profile', authenticate, updateProfile);
  * @desc    Update profile photo (uploaded to Cloudinary)
  * @access  Private
  */
-router.post('/profile-photo', authenticate, upload.single('image'), updateProfilePhoto);
+router.post('/profile-photo', authenticate, upload.single('image'), handleMulterError, updateProfilePhoto);
 
 /**
  * @route   GET /user/search/:uniqueId
