@@ -79,10 +79,12 @@ export const uploadToCloudinary = async (
     return null;
   }
   
+  const folder = getFolderPath(options.type, options.userId, options.coupleId);
+  
+  console.log(`📤 Uploading to Cloudinary: folder=${folder}, type=${options.type}`);
+  
   try {
-    const folder = getFolderPath(options.type, options.userId, options.coupleId);
-    
-    return new Promise((resolve, reject) => {
+    const result = await new Promise<{ url: string; publicId: string }>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder,
@@ -96,9 +98,10 @@ export const uploadToCloudinary = async (
         },
         (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
           if (error) {
-            console.error('Cloudinary upload error:', error);
+            console.error('❌ Cloudinary upload error:', JSON.stringify(error, null, 2));
             reject(error);
           } else if (result) {
+            console.log(`✅ Cloudinary upload success: ${result.secure_url}`);
             resolve({
               url: result.secure_url,
               publicId: result.public_id,
@@ -111,8 +114,10 @@ export const uploadToCloudinary = async (
       
       uploadStream.end(buffer);
     });
-  } catch (error) {
-    console.error('Upload to Cloudinary failed:', error);
+    
+    return result;
+  } catch (error: any) {
+    console.error('❌ Upload to Cloudinary failed:', error?.message || error);
     return null;
   }
 };
