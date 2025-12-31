@@ -6,14 +6,17 @@ import { config } from '../config/env';
  * In production, use a real email service like SendGrid, AWS SES, etc.
  */
 const createTransporter = () => {
-  // For development, use console logging with prominent display
-  if (config.isDevelopment) {
+  // Check if SMTP is properly configured
+  const smtpConfigured = process.env.SMTP_USER && process.env.SMTP_PASS;
+  
+  // For development or when SMTP is not configured, use console logging
+  if (config.isDevelopment || !smtpConfigured) {
     return {
       sendMail: async (options: any) => {
         const otp = options.text?.match(/\d{6}/)?.[0] || 'N/A';
         console.log('\n');
         console.log('╔══════════════════════════════════════════════════╗');
-        console.log('║            📧 EMAIL OTP (Dev Mode)               ║');
+        console.log('║            📧 EMAIL OTP (Console Mode)           ║');
         console.log('╠══════════════════════════════════════════════════╣');
         console.log(`║  To: ${options.to.padEnd(42)}║`);
         console.log(`║  Subject: ${options.subject?.slice(0, 38).padEnd(38)}║`);
@@ -22,13 +25,16 @@ const createTransporter = () => {
         console.log(`║           OTP CODE:  ${otp}                      ║`);
         console.log('║                                                  ║');
         console.log('╚══════════════════════════════════════════════════╝');
+        if (!smtpConfigured) {
+          console.log('⚠️  SMTP not configured. Set SMTP_USER and SMTP_PASS env vars.');
+        }
         console.log('\n');
-        return { messageId: 'dev-mode' };
+        return { messageId: 'console-mode' };
       },
     };
   }
 
-  // Production email configuration
+  // Production email configuration with SMTP
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
