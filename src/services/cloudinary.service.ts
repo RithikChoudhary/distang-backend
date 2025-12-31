@@ -1,5 +1,15 @@
 import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 
+// Check if Cloudinary is configured
+const CLOUDINARY_CONFIGURED = !!process.env.CLOUDINARY_API_SECRET;
+
+if (!CLOUDINARY_CONFIGURED) {
+  console.warn('⚠️  CLOUDINARY_API_SECRET not set - file uploads will fail!');
+  console.warn('   Add CLOUDINARY_API_SECRET to your environment variables.');
+} else {
+  console.log('✅ Cloudinary configured');
+}
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dbkbqh8sy',
@@ -62,6 +72,13 @@ export const uploadToCloudinary = async (
     resourceType?: 'image' | 'video' | 'raw' | 'auto';
   }
 ): Promise<{ url: string; publicId: string } | null> => {
+  // Check if Cloudinary is configured
+  if (!CLOUDINARY_CONFIGURED) {
+    console.error('❌ Cloudinary upload failed: CLOUDINARY_API_SECRET not configured');
+    console.error('   Please add CLOUDINARY_API_SECRET to Render environment variables');
+    return null;
+  }
+  
   try {
     const folder = getFolderPath(options.type, options.userId, options.coupleId);
     
