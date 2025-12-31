@@ -49,11 +49,11 @@ router.get('/me', authenticate, getMe);
 router.put('/profile', authenticate, updateProfile);
 
 /**
- * @route   PUT /user/profile-photo
+ * @route   POST /user/profile-photo
  * @desc    Update profile photo (uploaded to Cloudinary)
  * @access  Private
  */
-router.put('/profile-photo', authenticate, upload.single('photo'), updateProfilePhoto);
+router.post('/profile-photo', authenticate, upload.single('image'), updateProfilePhoto);
 
 /**
  * @route   GET /user/search/:uniqueId
