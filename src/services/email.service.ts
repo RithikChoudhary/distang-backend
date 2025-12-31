@@ -1,5 +1,4 @@
 import { Resend } from 'resend';
-import { config } from '../config/env';
 
 // Initialize Resend if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -24,11 +23,11 @@ export const sendOTPEmail = async (
     reset: `Your password reset code is: ${otp}`,
   };
 
-  // If Resend is configured, use it
+  // If Resend is configured, try to use it
   if (resend) {
     try {
       const { error } = await resend.emails.send({
-        from: 'Distang <onboarding@resend.dev>', // Use your verified domain later
+        from: 'Distang <onboarding@resend.dev>',
         to: email,
         subject: subjects[type],
         html: `
@@ -48,35 +47,33 @@ export const sendOTPEmail = async (
         `,
       });
 
-      if (error) {
-        console.error('Resend error:', error);
-        return false;
+      if (!error) {
+        console.log(`✅ OTP email sent to ${email}`);
+        return true;
       }
-
-      console.log(`✅ OTP email sent to ${email}`);
-      return true;
-    } catch (error) {
-      console.error('Email send error:', error);
-      return false;
+      
+      // Log Resend error but continue to console fallback
+      console.warn('Resend error (falling back to console):', error.message);
+    } catch (err) {
+      console.warn('Email send failed (falling back to console):', err);
     }
   }
 
-  // Fallback: Log OTP to console (for development or when email not configured)
+  // Fallback: Log OTP to console (always works for testing)
   console.log('\n');
   console.log('╔══════════════════════════════════════════════════╗');
   console.log('║            📧 EMAIL OTP (Console Mode)           ║');
   console.log('╠══════════════════════════════════════════════════╣');
   console.log(`║  To: ${email.padEnd(42)}║`);
-  console.log(`║  Subject: ${subjects[type]?.slice(0, 38).padEnd(38)}║`);
+  console.log(`║  Type: ${type.padEnd(41)}║`);
   console.log('╠══════════════════════════════════════════════════╣');
   console.log('║                                                  ║');
   console.log(`║           OTP CODE:  ${otp}                      ║`);
   console.log('║                                                  ║');
   console.log('╚══════════════════════════════════════════════════╝');
-  console.log('⚠️  Email not configured. Set RESEND_API_KEY env var.');
   console.log('\n');
   
-  // Return true so the app still works (user can see OTP in logs)
+  // Return true so the app works (user can see OTP in Render logs)
   return true;
 };
 
