@@ -1,24 +1,24 @@
 import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 
-// Cloudinary auto-configures from CLOUDINARY_URL if set
-// Format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
-// Otherwise, use individual env vars as fallback
-const CLOUDINARY_URL = process.env.CLOUDINARY_URL;
-const CLOUDINARY_CONFIGURED = !!(CLOUDINARY_URL || process.env.CLOUDINARY_API_SECRET);
+// Always configure Cloudinary explicitly with individual env vars
+// This ensures consistent configuration regardless of how vars are set
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
+const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-if (CLOUDINARY_URL) {
-  console.log('✅ Cloudinary configured via CLOUDINARY_URL');
-  // SDK auto-configures from CLOUDINARY_URL environment variable
-} else if (process.env.CLOUDINARY_API_SECRET) {
-  console.log('✅ Cloudinary configured via individual env vars');
+const CLOUDINARY_CONFIGURED = !!(cloudName && apiKey && apiSecret);
+
+if (CLOUDINARY_CONFIGURED) {
   cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dbkbqh8sy',
-    api_key: process.env.CLOUDINARY_API_KEY || '632942881449357',
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret,
   });
+  console.log(`✅ Cloudinary configured: cloud_name=${cloudName}, api_key=${apiKey?.substring(0, 6)}...`);
 } else {
   console.warn('⚠️  Cloudinary not configured - file uploads will fail!');
-  console.warn('   Set CLOUDINARY_URL or CLOUDINARY_API_SECRET in environment variables.');
+  console.warn('   Required env vars: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET');
+  console.warn(`   Current values: cloud_name=${cloudName || 'NOT SET'}, api_key=${apiKey || 'NOT SET'}, api_secret=${apiSecret ? 'SET' : 'NOT SET'}`);
 }
 
 /**
