@@ -19,9 +19,8 @@ export const generateToken = (userId: string, uniqueId: string): string => {
   };
   
   const secret: Secret = config.jwtSecret;
-  // Parse expiresIn as seconds if it's a number string, otherwise use as-is
-  const expiresInSeconds = parseInt(config.jwtExpiresIn, 10);
-  const expiresIn = isNaN(expiresInSeconds) ? '7d' : expiresInSeconds;
+  // Use expiresIn directly - supports strings like '7d', '30d', '1h' etc.
+  const expiresIn = config.jwtExpiresIn || '30d';
   
   return jwt.sign(payload, secret, { expiresIn });
 };
