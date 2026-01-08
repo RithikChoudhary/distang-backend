@@ -238,40 +238,37 @@ export const initiateLogin = async (req: Request, res: Response): Promise<void> 
   try {
     const { email, username } = req.body;
 
-    if (!email || !username) {
+    // Email is required, username is optional
+    if (!email) {
       res.status(400).json({
         success: false,
-        message: 'Email and username are required.',
+        message: 'Email is required.',
       });
       return;
     }
 
-    // Clean username - remove @ prefix if present, trim whitespace
-    const cleanUsername = username.toLowerCase().trim().replace(/^@/, '');
     const cleanEmail = email.toLowerCase().trim();
 
-    // Find user - try matching both email AND username
-    let user = await User.findOne({
-      email: cleanEmail,
-      username: cleanUsername,
-    });
+    // Find user by email
+    let user = await User.findOne({ email: cleanEmail });
 
-    // If not found, try finding by email only and check if username matches
-    if (!user) {
-      const userByEmail = await User.findOne({ email: cleanEmail });
-      if (userByEmail) {
-        // User exists with this email but username doesn't match
-        console.log(`Login attempt: email=${cleanEmail}, username=${cleanUsername}, db_username=${userByEmail.username}`);
+    // If username is provided, verify it matches
+    if (username && user) {
+      const cleanUsername = username.toLowerCase().trim().replace(/^@/, '');
+      if (user.username !== cleanUsername) {
+        console.log(`Login attempt: email=${cleanEmail}, username=${cleanUsername}, db_username=${user.username}`);
         res.status(401).json({
           success: false,
           message: 'Username does not match the email. Please check your credentials.',
         });
         return;
       }
-      
+    }
+
+    if (!user) {
       res.status(401).json({
         success: false,
-        message: 'Account not found. Please check your credentials.',
+        message: 'Account not found. Please check your email.',
       });
       return;
     }
