@@ -1,4 +1,4 @@
-import jwt, { JwtPayload, Secret, SignOptions } from 'jsonwebtoken';
+import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 import { config } from '../config/env';
 
 /**
@@ -20,11 +20,8 @@ export const generateToken = (userId: string, uniqueId: string): string => {
   
   const secret: Secret = config.jwtSecret;
   // Use expiresIn directly - supports strings like '7d', '30d', '1h' etc.
-  const options: SignOptions = {
-    expiresIn: config.jwtExpiresIn || '30d',
-  };
-  
-  return jwt.sign(payload, secret, options);
+  // Token expires in 30 days by default
+  return jwt.sign(payload, secret, { expiresIn: '30d' });
 };
 
 /**
